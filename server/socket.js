@@ -1,17 +1,16 @@
-const socketIO = require('socket.io');
+const { Server } = require('socket.io'); // correct way
 let io;
 
 function initSocket(server) {
-  const { Server } = socketIO;
   io = new Server(server, {
     cors: {
-      origin: '*',
-      methods: ['GET', 'POST'],
+      origin: 'http://localhost:5173',
+      methods: ['GET', 'POST', 'PUT', 'DELETE'],
+      credentials: true,
     },
   });
 
   io.on('connection', (socket) => {
-    console.log('New client connected', socket.id);
     socket.on('joinChannel', (channelId) => {
       socket.join(channelId);
       console.log(`User joined channel ${channelId}`);

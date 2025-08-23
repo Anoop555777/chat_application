@@ -18,24 +18,53 @@ const useChannel = () => {
   useEffect(() => {
     if (!channelId) return;
 
-    // 1. Join channel room
     socket.emit("joinChannel", channelId);
 
-    // 2. Listen for new messages
-    socket.on("newMessage", (newMsg) => {
+    const handleNewMessage = (newMsg) => {
       queryClient.setQueryData(["channel", channelId], (old) => {
         if (!old) return old;
+
+        // Replace temp message (if exists) with the real one
+        const exists = old.messages.some((m) => m._id === newMsg._id);
+        if (exists) return old;
+
         return {
           ...old,
-          messages: [...old.messages, newMsg],
+          messages: old.messages
+            .map((m) =>
+              m.pending && m.content === newMsg.content ? newMsg : m
+            )
+            .concat(
+              old.messages.some(
+                (m) => m.pending && m.content === newMsg.content
+              )
+                ? []
+                : [newMsg]
+            ),
         };
       });
-    });
+    };
 
-    // 3. Cleanup when leaving channel
+    const handleDeleteMessage = (msgId) => {
+      console.log("handleDeleteMessage", msgId);
+      queryClient.setQueryData(["channel", channelId], (old) => {
+        if (!old) return old;
+
+        return {
+          ...old,
+          messages: old.messages.filter((m) => m._id !== msgId),
+        };
+      });
+    };
+
+    socket.on("newMessage", handleNewMessage);
+
+    socket.on("deleteMessage", handleDeleteMessage);
+
     return () => {
       socket.emit("leaveChannel", channelId);
-      socket.off("newMessage");
+      socket.off("newMessage", handleNewMessage);
+      socket.off("deleteMessage", handleDeleteMessage);
     };
   }, [channelId, queryClient, socket]);
 

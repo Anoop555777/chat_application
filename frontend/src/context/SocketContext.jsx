@@ -9,8 +9,13 @@ function SocketProvider({ children }) {
     });
 
     return () => {
-      socket.disconnect();
+      socket.off("connect");
+      socket.off("disconnect");
     };
+    // ⚠️ Don't disconnect in cleanup, or StrictMode will kill connection
+    // return () => {
+    //   socket.disconnect();
+    // };
   }, []);
 
   return (
@@ -20,6 +25,7 @@ function SocketProvider({ children }) {
 
 function useSocket() {
   const socket = useContext(SocketContext);
+
   if (!socket) {
     throw new Error("useSocket must be used within a SocketProvider");
   }

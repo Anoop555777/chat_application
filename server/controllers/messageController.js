@@ -47,7 +47,8 @@ exports.getMessages = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteMessage = catchAsync(async (req, res, next) => {
-  const { messageId } = req.params;
+  const { messageId, channelId } = req.params;
+
   if (!messageId) return next(new AppError('Message ID is required', 400));
   const message = await Message.findOneAndDelete({
     _id: messageId,
@@ -56,9 +57,7 @@ exports.deleteMessage = catchAsync(async (req, res, next) => {
 
   if (!message) return next(new AppError('Message not found', 404));
 
-  res.status(204).json({
-    status: 'success',
-    message: 'Message deleted successfully',
-    data: null,
-  });
+  getSocket().to(channelId).emit('deleteMessage', message._id);
+
+  res.status(204).end();
 });
