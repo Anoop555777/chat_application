@@ -1,19 +1,15 @@
-import { useEffect } from "react";
+import { Navigate } from "react-router-dom";
 import useUser from "../features/authentication/useUser";
-import { useNavigate } from "react-router-dom";
-import FullPage from "./FullPage";
 import SpinnerUI from "./SpinnerUI";
 
 const ProtectedRoute = ({ children }) => {
-  const navigate = useNavigate();
-  const { isLoading, isAuthenticated } = useUser();
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) navigate("/login");
-  }, [isLoading, navigate, isAuthenticated]);
+  const { isLoading, isAuthenticated, isError } = useUser();
 
   if (isLoading) return <SpinnerUI isLoading={isLoading} fullscreen={true} />;
 
+  if (isError || !isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
   if (isAuthenticated) return children;
   return null;
 };

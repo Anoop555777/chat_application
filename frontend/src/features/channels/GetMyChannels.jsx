@@ -15,7 +15,7 @@ const GetMyChannels = () => {
     );
 
   return (
-    <Flex direction="column" gap="1">
+    <Flex width="100%" direction="column" gap="1" maxH="70vh" overflowY="auto">
       {channels.map((channel) => (
         <NavItem key={channel._id} link={channel._id}>
           {channel.name}

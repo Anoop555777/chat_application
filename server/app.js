@@ -7,6 +7,7 @@ const messageRouter = require('./routes/messageRouter');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const app = express();
+const userRouter = require('./routes/userRouter');
 
 app.use(
   cors({
@@ -18,6 +19,7 @@ app.use(cookieParser());
 app.use(express.json({ limit: '10kb' }));
 
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/users', userRouter);
 app.use('/api/v1/channels', channelRouter);
 app.use('/api/v1/messages', messageRouter);
 

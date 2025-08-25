@@ -9,7 +9,9 @@ import {
   useColorModeValue,
   VStack,
   Box,
+  IconButton,
 } from "@chakra-ui/react";
+import { BiDotsVerticalRounded } from "react-icons/bi";
 import ChatInput from "../../ui/ChatInput";
 import useMessage from "../messages/useMessage";
 import MessageList from "../messages/MessageList";
@@ -30,13 +32,14 @@ const ChannelDetails = () => {
     <Box position="relative">
       <Flex
         height="20"
+        p={4}
         alignItems="center"
         bg={useColorModeValue("gray.200", "gray.900")}
         borderBottomWidth="1px"
         borderBottomColor={useColorModeValue("gray.200", "gray.700")}
-        justifyContent={{ base: "flex-start", md: "flex-start" }}
+        justifyContent={{ base: "space-between", md: "space-between" }}
       >
-        <Flex alignItems={"center"} p="4">
+        <Flex alignItems={"center"} justifyContent="space-between">
           <HStack gap="4">
             <Avatar
               size="md"
@@ -50,6 +53,15 @@ const ChannelDetails = () => {
             </VStack>
           </HStack>
         </Flex>
+        <IconButton
+          icon={<BiDotsVerticalRounded />}
+          bg="none"
+          border="none"
+          outline="none"
+          size="lg"
+          borderRadius="full"
+          _focus={{ boxShadow: "none" }}
+        />
       </Flex>
       <MessageList messages={channel.messages} />
       <ChatInput onSend={handleSendMessage} />

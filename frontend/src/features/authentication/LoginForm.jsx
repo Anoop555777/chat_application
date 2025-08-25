@@ -70,7 +70,7 @@ export default function AuthCard() {
           <Stack spacing={4}>
             <form onSubmit={handleSubmit(onSubmitHandler, onErrorHandler)}>
               {isSignUp && (
-                <FormControl isInvalid={errors.name}>
+                <FormControl isInvalid={errors.fullname}>
                   <FormLabel>Full Name</FormLabel>
                   <Input
                     type="text"
@@ -81,7 +81,7 @@ export default function AuthCard() {
                     })}
                   />
                   <FormErrorMessage>
-                    {errors.name && errors.name.message}
+                    {errors.fullname && errors.fullname.message}
                   </FormErrorMessage>
                 </FormControl>
               )}

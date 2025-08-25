@@ -11,33 +11,6 @@ const Message = ({ msg }) => {
   return (
     <Box maxW="70%" alignSelf={isMine ? "flex-end" : "flex-start"}>
       <HStack>
-        <Box
-          bg={isMine ? "blue.500" : "gray.200"}
-          color={isMine ? "white" : "black"}
-          px={4}
-          py={2}
-          borderRadius="lg"
-          boxShadow="sm"
-        >
-          {!isMine ? (
-            <Text fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>
-              {msg.sender.fullname || "User"}
-            </Text>
-          ) : (
-            <Text fontSize="xs" fontWeight="bold" color="gray.100" mb={1}>
-              You
-            </Text>
-          )}
-
-          <Text>{msg.content}</Text>
-          <Text fontSize="xs" opacity={0.7} mt={1} textAlign="right">
-            {new Date(msg.createdAt).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: true,
-            })}
-          </Text>
-        </Box>
         {isMine && (
           <Modal>
             <Modal.Open>
@@ -76,6 +49,33 @@ const Message = ({ msg }) => {
             </Modal.Window>
           </Modal>
         )}
+        <Box
+          bg={isMine ? "blue.500" : "gray.200"}
+          color={isMine ? "white" : "black"}
+          px={4}
+          py={2}
+          borderRadius="lg"
+          boxShadow="sm"
+        >
+          {!isMine ? (
+            <Text fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>
+              {msg.sender.fullname || "User"}
+            </Text>
+          ) : (
+            <Text fontSize="xs" fontWeight="bold" color="gray.100" mb={1}>
+              You
+            </Text>
+          )}
+
+          <Text>{msg.content}</Text>
+          <Text fontSize="xs" opacity={0.7} mt={1} textAlign="right">
+            {new Date(msg.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            })}
+          </Text>
+        </Box>
       </HStack>
     </Box>
   );

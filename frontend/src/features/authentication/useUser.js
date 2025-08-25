@@ -10,7 +10,7 @@ function useUser() {
   return {
     isLoading,
     user,
-    isAuthenticated: user?.fullname && user?.isVerified,
+    isAuthenticated: Boolean(user?.fullname && user?.isVerified),
   };
 }
 

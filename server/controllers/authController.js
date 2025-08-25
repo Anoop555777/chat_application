@@ -6,7 +6,8 @@ const jwt = require('jsonwebtoken');
 const util = require('util');
 const crypto = require('crypto');
 const Email = require('../utils/email');
-const { decode } = require('punycode');
+const ChannelMember = require('../models/channelMemberModel');
+
 // const otpStore = {};
 
 const tokenGenerater = function (id) {
@@ -352,11 +353,21 @@ exports.isLoggedIn = async (req, res, next) => {
       // 2) Check if user still exists
       const currentUser = await User.findById(decoded.id);
       if (!currentUser) {
-        return next();
+        return next(
+          new AppError(
+            'The user belonging to this token does no longer exist.',
+            401
+          )
+        );
       }
       // 3) Check if user changed password after the token was issued
       if (currentUser.changePasswordAfter(decoded.iat)) {
-        return next();
+        return next(
+          new AppError(
+            'User recently changed password! Please log in again.',
+            401
+          )
+        );
       }
 
       // THERE IS A LOGGED IN U
@@ -366,8 +377,8 @@ exports.isLoggedIn = async (req, res, next) => {
         user: currentUser,
       });
     } catch (err) {
-      return next();
+      return next(new AppError('Please log in first', 401));
     }
   }
-  next();
+  next(new AppError('Please log in first', 401));
 };

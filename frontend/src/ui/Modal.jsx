@@ -1,16 +1,3 @@
-// import {
-//   Modal as ChakraModal,
-//   Text,
-//   ModalOverlay,
-//   ModalContent,
-//   ModalHeader,
-//   ModalFooter,
-//   ModalBody,
-//   ModalCloseButton,
-//   useDisclosure,
-//   Button,
-// } from "@chakra-ui/react";
-
 import { cloneElement, createContext, useContext } from "react";
 import {
   useDisclosure,
@@ -70,7 +57,14 @@ function Header({ children }) {
 }
 
 function Body({ children }) {
-  return <ModalBody>{children}</ModalBody>;
+  const { onClose } = useContext(ModalContext);
+  return (
+    <ModalBody>
+      {cloneElement(children, {
+        onCloseModal: () => onClose(),
+      })}
+    </ModalBody>
+  );
 }
 
 function Footer({ children }) {

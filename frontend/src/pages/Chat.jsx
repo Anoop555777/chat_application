@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import useChannelMy from "../features/channels/useChannelMy";
 import SpinnerUI from "../ui/SpinnerUI";
+import { Text } from "@chakra-ui/react";
 
 const Chat = () => {
   const navigate = useNavigate();

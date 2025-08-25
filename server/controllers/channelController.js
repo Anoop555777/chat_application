@@ -2,7 +2,7 @@ const catchAsync = require('../utils/catchAsync');
 const Channel = require('../models/channelModel');
 const AppError = require('../utils/appError');
 const User = require('../models/userModel');
-const ChannelMember = require('../models/channelmemberModel');
+const ChannelMember = require('../models/channelMemberModel');
 
 exports.createChannel = catchAsync(async (req, res, next) => {
   channelData = {};
@@ -14,10 +14,9 @@ exports.createChannel = catchAsync(async (req, res, next) => {
     );
 
   // Ensure creator is in the members list
-  if (!members.includes(req.user._id.toString()))
-    members.push(req.user._id.toString());
+  if (!members.includes(req.user.email)) members.push(req.user.email);
 
-  const user = await User.find({ _id: { $in: members } });
+  const user = await User.find({ email: { $in: members } });
 
   if (!user || user.length != members.length)
     return next(new AppError('one or more member is missing', 404));
@@ -31,11 +30,11 @@ exports.createChannel = catchAsync(async (req, res, next) => {
 
   const channel = await Channel.create(channelData);
 
-  const channelMemberData = members.map((ids) => ({
+  const channelMemberData = user.map((data) => ({
     channel: channel._id,
-    user: ids,
+    user: data._id,
     role:
-      ids.toString() == req.user._id.toString() || members.length == 2
+      data._id.toString() == req.user._id.toString() || members.length == 2
         ? 'admin'
         : 'member',
   }));

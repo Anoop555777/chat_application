@@ -7,6 +7,7 @@ import {
   Text,
   Drawer,
   DrawerContent,
+  VStack,
 } from "@chakra-ui/react";
 import {
   FiHome,
@@ -16,6 +17,7 @@ import {
   FiSettings,
 } from "react-icons/fi";
 import GetMyChannels from "../features/channels/GetMyChannels";
+import AddChannelButton from "./AddChannelButton";
 
 const LinkItems = [
   { name: "Home", icon: FiHome },
@@ -43,7 +45,10 @@ const SidebarContent = ({ onClose, ...rest }) => {
         </Text>
         <CloseButton display={{ base: "flex", md: "none" }} onClick={onClose} />
       </Flex>
-      <GetMyChannels />
+      <VStack spacing="4">
+        <GetMyChannels />
+        <AddChannelButton variant="destop" />
+      </VStack>
     </Box>
   );
 };
@@ -55,6 +60,7 @@ const SidebarWithHeader = ({ isOpen, onClose, children }) => {
         onClose={() => onClose}
         display={{ base: "none", md: "block" }}
       />
+
       <Drawer
         isOpen={isOpen}
         placement="left"
@@ -67,6 +73,7 @@ const SidebarWithHeader = ({ isOpen, onClose, children }) => {
           <SidebarContent onClose={onClose} />
         </DrawerContent>
       </Drawer>
+      <AddChannelButton variant="mobile" />
       {children}
     </Box>
   );
