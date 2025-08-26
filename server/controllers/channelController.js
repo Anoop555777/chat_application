@@ -171,14 +171,16 @@ exports.getChannelMembers = catchAsync(async (req, res, next) => {
   const { channelId } = req.params;
   const members = await ChannelMember.find({ channel: channelId }).populate({
     path: 'user',
-    select: 'firstname lastname avatar',
+    select: 'fullname email avatar',
   });
   if (!members || members.length === 0)
     return next(new AppError('No members found for this channel', 404));
 
+  const users = members.map((member) => member.user);
+
   res.status(200).json({
     status: 'success',
-    members,
+    members: users,
   });
 });
 
@@ -198,7 +200,10 @@ exports.deleteChannel = catchAsync(async (req, res, next) => {
 
   if (!adminUser)
     return next(
-      new AppError('You are not authorized to delete this channel', 403)
+      new AppError(
+        'You are not admin so no authorization to delete this channel',
+        403
+      )
     );
 
   await ChannelMember.deleteMany({ channel: channelId });
@@ -219,14 +224,71 @@ exports.getChannel = catchAsync(async (req, res, next) => {
     channel: channelId,
     user: req.user._id,
   });
+
   if (!channelExistWithUser)
     return next(new AppError('You are not a member of this channel', 403));
   // Fetch channel details along with messages
-  const channel = await Channel.findById(channelId).populate('messages');
+  let channel = await Channel.findById(channelId).populate('messages');
   if (!channel) return next(new AppError('Channel not found', 404));
 
   res.status(200).json({
     status: 'success',
+    channel,
+    role: channelExistWithUser.role,
+  });
+});
+
+exports.exitSelfFromUser = catchAsync(async (req, res, next) => {
+  const { channelId } = req.params;
+
+  const channel = await Channel.findById(channelId);
+  if (!channel) return next(new AppError('Channel not found', 404));
+
+  const member = await ChannelMember.find({
+    channel: channelId,
+    user: req.user._id,
+  });
+
+  console.log(member);
+
+  if (!member) return new AppError('You are not a member of this channel', 403);
+
+  await ChannelMember.deleteOne({
+    channel: channelId,
+    user: req.user._id,
+  });
+
+  const members = await ChannelMember.countDocuments({
+    channel: channelId,
+  });
+
+  if (members <= 1) {
+    await ChannelMember.deleteMany({
+      channel: channelId,
+    });
+    await Channel.findByIdAndDelete(channelId);
+  }
+
+  res.status(204).json({
+    status: 'success',
+    message: 'You have left the channel successfully',
+    data: null,
+  });
+});
+
+exports.editChannel = catchAsync(async (req, res, next) => {
+  const { channelId } = req.params;
+
+  const channel = await Channel.findByIdAndUpdate(channelId, req.body, {
+    new: true,
+    runValidators: true,
+  });
+
+  if (!channel) return next(new AppError('Channel not found', 404));
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Channel updated successfully',
     channel,
   });
 });

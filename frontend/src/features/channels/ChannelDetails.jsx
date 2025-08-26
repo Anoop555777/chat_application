@@ -10,14 +10,26 @@ import {
   VStack,
   Box,
   IconButton,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  Button,
 } from "@chakra-ui/react";
 import { BiDotsVerticalRounded } from "react-icons/bi";
 import ChatInput from "../../ui/ChatInput";
 import useMessage from "../messages/useMessage";
 import MessageList from "../messages/MessageList";
+import Modal from "../../ui/Modal";
+import useExitChannel from "./useExitChannel";
+import useDeleteChannel from "./useDeleteChannel";
+import CreateChannel from "./CreateChannel";
+import AddUserToChannel from "../users/AddUserToChannel";
 
 const ChannelDetails = () => {
   const { channel, isLoading } = useChannel();
+  const { exitChannel, isPending } = useExitChannel();
+  const { deleteChannel, isDeleting } = useDeleteChannel();
 
   const { message } = useMessage();
 
@@ -50,10 +62,11 @@ const ChannelDetails = () => {
             <VStack alignItems="flex-start" spacing="1px">
               <Text fontSize="lg">{channel.name}</Text>
               <Text fontSize="sm">{channel.description}</Text>
+              {channel.role === "admin" && <Text fontSize="sm">Admin</Text>}
             </VStack>
           </HStack>
         </Flex>
-        <IconButton
+        {/* <IconButton
           icon={<BiDotsVerticalRounded />}
           bg="none"
           border="none"
@@ -61,7 +74,107 @@ const ChannelDetails = () => {
           size="lg"
           borderRadius="full"
           _focus={{ boxShadow: "none" }}
-        />
+        /> */}
+
+        <Menu>
+          <MenuButton
+            as={IconButton}
+            icon={<BiDotsVerticalRounded />}
+            bg="none"
+            border="none"
+            outline="none"
+            size="lg"
+            borderRadius="full"
+            _focus={{ boxShadow: "none" }}
+            transition="all 0.3s"
+            py={2}
+          />
+
+          <MenuList
+            bg={useColorModeValue("white", "gray.900")}
+            borderColor={useColorModeValue("gray.200", "gray.700")}
+          >
+            {channel.role === "admin" && (
+              <>
+                <Modal>
+                  <Modal.Open>
+                    <MenuItem>Edit Channel</MenuItem>
+                  </Modal.Open>
+                  <Modal.Window>
+                    <Modal.Header>Edit Channel</Modal.Header>
+                    <Modal.Body>
+                      <CreateChannel channelToEdit={channel} />
+                    </Modal.Body>
+                  </Modal.Window>
+                </Modal>
+
+                <Modal>
+                  <Modal.Open>
+                    <MenuItem>Add User To Channel</MenuItem>
+                  </Modal.Open>
+                  <Modal.Window>
+                    <Modal.Header>Add User To Channel</Modal.Header>
+                    <Modal.Body>
+                      <AddUserToChannel />
+                    </Modal.Body>
+                  </Modal.Window>
+                </Modal>
+
+                <Modal>
+                  <Modal.Open>
+                    <MenuItem>Delete Channel</MenuItem>
+                  </Modal.Open>
+                  <Modal.Window>
+                    <Modal.Header>Exit Channel</Modal.Header>
+                    <Modal.Body>
+                      <Text>
+                        Are you sure you want to delete this {channel.name}{" "}
+                        Channel permanently? This action cannot be undone.
+                      </Text>
+                    </Modal.Body>
+                    <Modal.Footer>
+                      <Modal.Close />
+                      <Button
+                        colorScheme="red"
+                        onClick={() => deleteChannel(channel._id)}
+                        isLoading={isDeleting}
+                        isDisabled={isDeleting}
+                      >
+                        Delete
+                      </Button>
+                    </Modal.Footer>
+                  </Modal.Window>
+                </Modal>
+              </>
+            )}
+
+            <Modal>
+              <Modal.Open>
+                <MenuItem>Exit Channel</MenuItem>
+              </Modal.Open>
+              <Modal.Window>
+                <Modal.Header>Exit Channel</Modal.Header>
+                <Modal.Body>
+                  <Text>
+                    Are you sure you want to exit this {channel.name} Channel
+                    permanently? This action cannot be undone.
+                  </Text>
+                </Modal.Body>
+                <Modal.Footer>
+                  <Modal.Close />
+                  <Button
+                    colorScheme="red"
+                    onClick={() => exitChannel(channel._id)}
+                    isLoading={isPending}
+                    isDisabled={isPending}
+                  >
+                    Exit
+                  </Button>
+                </Modal.Footer>
+              </Modal.Window>
+            </Modal>
+          </MenuList>
+        </Menu>
       </Flex>
       <MessageList messages={channel.messages} />
       <ChatInput onSend={handleSendMessage} />

@@ -10,10 +10,19 @@ channelRouter.use('/:channelId/messages', messageRouter);
 channelRouter.use(authController.protect);
 
 channelRouter.post('/', channelController.createChannel);
-channelRouter.delete('/:channelId', channelController.deleteChannel);
 
-channelRouter.get('/:channelId', channelController.getChannel);
+channelRouter
+  .route('/:channelId')
+  .delete(channelController.deleteChannel)
+  .get(channelController.getChannel)
+  .patch(channelController.editChannel);
+
 channelRouter.get('/me/my-channels', channelController.getMyChannels);
+
+channelRouter.delete(
+  '/:channelId/members/exit',
+  channelController.exitSelfFromUser
+);
 
 channelRouter
   .route('/:channelId/members')
@@ -21,7 +30,7 @@ channelRouter
   .get(channelController.getChannelMembers);
 channelRouter.delete(
   '/:channelId/members/:memberId',
-
   channelController.removeUserFromChannel
 );
+
 module.exports = channelRouter;

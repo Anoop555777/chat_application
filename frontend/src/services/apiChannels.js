@@ -7,7 +7,12 @@ export async function getMyChannels() {
 
 export async function getChannel(channelId) {
   const { data } = await axios.get(`/api/v1/channels/${channelId}`);
-  return data?.channel;
+
+  const result = {
+    ...data?.channel,
+    role: data?.role,
+  };
+  return result;
 }
 
 export async function createChannel({ name, description, members }) {
@@ -24,4 +29,30 @@ export async function createChannel({ name, description, members }) {
   );
 
   return data?.data?.channel;
+}
+
+export async function exitSelfFromChannel(channelId) {
+  await axios.delete(`/api/v1/channels/${channelId}/members/exit`);
+
+  return null;
+}
+
+export async function deleteChannel(channelId) {
+  await axios.delete(`/api/v1/channels/${channelId}`);
+
+  return null;
+}
+
+export async function editChannel({ channelId, data }) {
+  const response = await axios.patch(
+    `/api/v1/channels/${channelId}`,
+    {
+      ...data,
+    },
+    {
+      withCredentials: true,
+    }
+  );
+
+  return response?.data?.channel;
 }

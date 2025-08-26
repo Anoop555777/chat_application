@@ -17,32 +17,50 @@ import AddUserEmail from "../users/AddUserEmail";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import useCreateChannel from "./useCreateChannel";
+import useEditChannel from "./useEditChannel";
 
-const CreateChannel = ({ onCloseModal }) => {
+const CreateChannel = ({ channelToEdit = {}, onCloseModal }) => {
+  const { _id: editId, ...editValues } = channelToEdit;
+  const isEditSession = Boolean(editId);
   const [addMembers, setAddMembers] = useState([]);
   const { createChannel, isPending } = useCreateChannel();
+  const { editChannel, isEditing } = useEditChannel();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm();
+  } = useForm({
+    defaultValues: isEditSession ? editValues : {},
+  });
 
   function onSubmitHandler(data) {
-    if (!addMembers.length) {
-      toast.error("Please add atleast members to create channel");
-      return;
-    }
-    createChannel(
-      { ...data, members: addMembers },
-      {
-        onSuccess: () => {
-          reset();
-          onCloseModal?.();
-        },
+    if (isEditSession) {
+      editChannel(
+        { channelId: editId, data },
+        {
+          onSuccess: () => {
+            reset();
+            onCloseModal?.();
+          },
+        }
+      );
+    } else {
+      if (!addMembers.length) {
+        toast.error("Please add atleast members to create channel");
+        return;
       }
-    );
+      createChannel(
+        { ...data, members: addMembers },
+        {
+          onSuccess: () => {
+            reset();
+            onCloseModal?.();
+          },
+        }
+      );
+    }
   }
 
   return (
@@ -50,8 +68,15 @@ const CreateChannel = ({ onCloseModal }) => {
       <Heading size="lg" mb={4}>
         Channel Members
       </Heading>
-      <GetAllFriends setAddMembers={setAddMembers} addMembers={addMembers} />
-      <AddUserEmail addMembers={addMembers} setAddMembers={setAddMembers} />
+      {!isEditSession && (
+        <>
+          <GetAllFriends
+            setAddMembers={setAddMembers}
+            addMembers={addMembers}
+          />
+          <AddUserEmail addMembers={addMembers} setAddMembers={setAddMembers} />
+        </>
+      )}
       <Stack spacing={2} mt={2}>
         <form onSubmit={handleSubmit(onSubmitHandler)}>
           <FormControl isInvalid={errors.name}>
@@ -88,9 +113,9 @@ const CreateChannel = ({ onCloseModal }) => {
               colorScheme="teal"
               p={2}
               type="submit"
-              isLoading={isPending}
+              isLoading={isPending || isEditing}
             >
-              create channel
+              {isEditSession ? "Edit Channel" : "Create Channel"}
             </Button>
           </Modal.Footer>
         </form>
