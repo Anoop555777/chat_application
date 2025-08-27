@@ -4,11 +4,11 @@ import { getUsersOfChannel } from "../../services/apiUsers";
 
 const useUserToChannel = () => {
   const { channelId } = useParams();
-  const { data: channelMember, isLoading } = useQuery({
+  const { data: channelMembers, isLoading } = useQuery({
     queryFn: () => getUsersOfChannel(channelId),
     queryKey: ["members", channelId],
   });
-  return { channelMember, isLoading };
+  return { channelMembers, isLoading };
 };
 
 export default useUserToChannel;

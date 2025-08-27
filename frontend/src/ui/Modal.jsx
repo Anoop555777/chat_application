@@ -53,7 +53,11 @@ function Open({ children }) {
 }
 
 function Header({ children }) {
-  return <ModalHeader fontWeight="bold">{children}</ModalHeader>;
+  return (
+    <ModalHeader pb={2} fontWeight="bold">
+      {children}
+    </ModalHeader>
+  );
 }
 
 function Body({ children }) {

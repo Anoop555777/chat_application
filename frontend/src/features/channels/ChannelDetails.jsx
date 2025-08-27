@@ -25,6 +25,7 @@ import useExitChannel from "./useExitChannel";
 import useDeleteChannel from "./useDeleteChannel";
 import CreateChannel from "./CreateChannel";
 import AddUserToChannel from "../users/AddUserToChannel";
+import ChannelUsers from "../users/ChannelUsers";
 
 const ChannelDetails = () => {
   const { channel, isLoading } = useChannel();
@@ -145,6 +146,17 @@ const ChannelDetails = () => {
                     </Modal.Footer>
                   </Modal.Window>
                 </Modal>
+                <Modal>
+                  <Modal.Open>
+                    <MenuItem>Remove User From Channel</MenuItem>
+                  </Modal.Open>
+                  <Modal.Window>
+                    <Modal.Header>Remove User</Modal.Header>
+                    <Modal.Body>
+                      <ChannelUsers removeUser={true} />
+                    </Modal.Body>
+                  </Modal.Window>
+                </Modal>
               </>
             )}
 
@@ -171,6 +183,17 @@ const ChannelDetails = () => {
                     Exit
                   </Button>
                 </Modal.Footer>
+              </Modal.Window>
+            </Modal>
+            <Modal>
+              <Modal.Open>
+                <MenuItem>Channel Members</MenuItem>
+              </Modal.Open>
+              <Modal.Window>
+                <Modal.Header>Channel Members</Modal.Header>
+                <Modal.Body>
+                  <ChannelUsers />
+                </Modal.Body>
               </Modal.Window>
             </Modal>
           </MenuList>

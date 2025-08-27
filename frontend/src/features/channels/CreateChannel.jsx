@@ -1,14 +1,18 @@
 import {
+  Avatar,
   Box,
   Button,
+  Flex,
   FormControl,
   FormErrorMessage,
   FormLabel,
   Heading,
-  HStack,
+  IconButton,
   Input,
   Stack,
+  Text,
   Textarea,
+  VStack,
 } from "@chakra-ui/react";
 import GetAllFriends from "../users/GetAllFriends";
 import { useState } from "react";
@@ -18,6 +22,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import useCreateChannel from "./useCreateChannel";
 import useEditChannel from "./useEditChannel";
+import { CloseIcon } from "@chakra-ui/icons";
 
 const CreateChannel = ({ channelToEdit = {}, onCloseModal }) => {
   const { _id: editId, ...editValues } = channelToEdit;
@@ -63,13 +68,47 @@ const CreateChannel = ({ channelToEdit = {}, onCloseModal }) => {
     }
   }
 
+  const handleRemove = (email) => {
+    setAddMembers((prev) => prev.filter((m) => m !== email));
+  };
+
   return (
-    <Box p={2}>
+    <Box py={1}>
       <Heading size="lg" mb={4}>
         Channel Members
       </Heading>
+
       {!isEditSession && (
         <>
+          {addMembers.length > 0 && (
+            <Flex mb={4} gap={3} wrap="wrap">
+              {addMembers.map((email) => (
+                <VStack
+                  position="relative"
+                  key={email}
+                  spacing={1}
+                  bg="teal.50"
+                  px={3}
+                  py={1}
+                  shadow="sm"
+                >
+                  <Avatar size="sm" name={email} />
+                  <Text fontSize="sm">{`${email.slice(0, 3)}...`}</Text>
+                  <IconButton
+                    size="xs"
+                    position="absolute"
+                    right="-1"
+                    top="-1"
+                    icon={<CloseIcon />}
+                    aria-label="remove"
+                    onClick={() => handleRemove(email)}
+                    bg="none"
+                    zIndex="10"
+                  />
+                </VStack>
+              ))}
+            </Flex>
+          )}
           <GetAllFriends
             setAddMembers={setAddMembers}
             addMembers={addMembers}

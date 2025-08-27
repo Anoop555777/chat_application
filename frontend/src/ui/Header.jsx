@@ -16,10 +16,12 @@ import {
 import { FiBell, FiChevronDown, FiMenu } from "react-icons/fi";
 import useUser from "../features/authentication/useUser";
 import useLogout from "../features/authentication/useLogout";
+import { useNavigate } from "react-router-dom";
 
 const Header = ({ onOpen, ...rest }) => {
   const { user } = useUser();
   const { logout, isPending } = useLogout();
+  const navigate = useNavigate();
 
   return (
     <Flex
@@ -47,7 +49,7 @@ const Header = ({ onOpen, ...rest }) => {
         fontFamily="monospace"
         fontWeight="bold"
       >
-        Logo
+        AJCHAT
       </Text>
 
       <HStack spacing={{ base: "flex", md: "6" }}>
@@ -88,9 +90,13 @@ const Header = ({ onOpen, ...rest }) => {
               bg={useColorModeValue("white", "gray.900")}
               borderColor={useColorModeValue("gray.200", "gray.700")}
             >
-              <MenuItem>Profile</MenuItem>
-              <MenuItem>Settings</MenuItem>
-              <MenuItem>Billing</MenuItem>
+              <MenuItem
+                onClick={() => {
+                  navigate("/profile");
+                }}
+              >
+                Profile
+              </MenuItem>
               <MenuDivider />
               <MenuItem
                 isDisabled={isPending}

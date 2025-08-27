@@ -65,51 +65,41 @@ exports.getMyChannels = catchAsync(async (req, res, next) => {
 
 exports.addUserToChannel = catchAsync(async (req, res, next) => {
   const { channelId } = req.params;
-  const { member } = req.body;
+  const { members } = req.body;
 
   if (!channelId) return next(new AppError('Channel ID is required', 400));
-  if (!member) return next(new AppError('Member ID is required', 400));
+  if (members.length == 0)
+    return next(new AppError('Members are is required', 400));
 
   const adminUser = await ChannelMember.findOne({
     user: req.user._id,
+    channel: channelId,
+    role: 'admin',
   });
+
+  const channel = await Channel.findById(channelId);
+  if (!channel) return next(new AppError('Channel not found', 404));
 
   if (!adminUser)
     return next(
       new AppError('You are not authorized to add members to this channel', 403)
     );
 
-  const user = await User.findById(member);
-  if (!user) return next(new AppError('User not found', 404));
-  if (user && !user.isVerified && !user.isProfileComplete)
-    return next(
-      new AppError('User must be verified and have a complete profile', 400)
-    );
+  const users = await User.find({ email: { $in: members } });
+  if (!users || users.length != members.length)
+    return next(new AppError('one or more member is missing', 404));
 
-  const channel = await Channel.findById(channelId);
-
-  if (!channel) return next(new AppError('Channel not found', 404));
-
-  const channelMember = await ChannelMember.find({
-    channel: channelId,
-    user: member,
-  });
-
-  if (channelMember.length > 0)
-    return next(new AppError('User is already a member of this channel', 400));
-
-  const newMember = await ChannelMember.create({
+  const channelMemberData = users.map((user) => ({
     channel: channelId,
     user: user._id,
-    role: 'member', // Default role, can be changed later
-  });
+  }));
+
+  await ChannelMember.insertMany(channelMemberData);
 
   res.status(200).json({
     status: 'success',
     message: 'User added to channel successfully',
-    data: {
-      member: newMember,
-    },
+    members: users,
   });
 });
 
@@ -128,27 +118,22 @@ exports.removeUserFromChannel = catchAsync(async (req, res, next) => {
   if (!channelExists)
     return next(new AppError('Channel or member not found', 404));
 
-  // Check if the user is trying to remove themselves
-  if (req.user._id.toString() === memberId) {
-    await ChannelMember.findByIdAndDelete(channelExists._id);
-  } else {
-    // Check if the user is an admin of the channel
-    const adminUser = await ChannelMember.findOne({
-      user: req.user._id,
-      channel: channelId,
-      role: 'admin',
-    });
+  // Check if the user is an admin of the channel
+  const adminUser = await ChannelMember.findOne({
+    user: req.user._id,
+    channel: channelId,
+    role: 'admin',
+  });
 
-    if (!adminUser)
-      return next(
-        new AppError(
-          'You are not authorized to remove members from this channel',
-          403
-        )
-      );
+  if (!adminUser)
+    return next(
+      new AppError(
+        'You are not authorized to remove members from this channel',
+        403
+      )
+    );
 
-    await ChannelMember.findByIdAndDelete(channelExists._id);
-  }
+  await ChannelMember.findByIdAndDelete(channelExists._id);
 
   //check if channel have only one member
   const remainingMembers = await ChannelMember.countDocuments({
@@ -173,10 +158,19 @@ exports.getChannelMembers = catchAsync(async (req, res, next) => {
     path: 'user',
     select: 'fullname email avatar',
   });
-  if (!members || members.length === 0)
-    return next(new AppError('No members found for this channel', 404));
 
-  const users = members.map((member) => member.user);
+  if (!members || members.length === 0)
+    res.status(200).json({
+      status: 'success',
+      members: [],
+    });
+
+  const users = members.map((member) => {
+    return {
+      ...member.user._doc,
+      role: member.role,
+    };
+  });
 
   res.status(200).json({
     status: 'success',
@@ -248,8 +242,6 @@ exports.exitSelfFromUser = catchAsync(async (req, res, next) => {
     channel: channelId,
     user: req.user._id,
   });
-
-  console.log(member);
 
   if (!member) return new AppError('You are not a member of this channel', 403);
 

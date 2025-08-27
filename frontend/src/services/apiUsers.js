@@ -11,3 +11,25 @@ export async function getUsersOfChannel(channelId) {
 
   return data?.members;
 }
+
+export async function addUserToChannel(channelId, members) {
+  const { data } = await axios.post(
+    `/api/v1/channels/${channelId}/members`,
+    {
+      members,
+    },
+    {
+      withCredentials: true,
+    }
+  );
+
+  return data?.members;
+}
+
+export async function removeUserFromChannel(channelId, userId) {
+  await axios.delete(`/api/v1/channels/${channelId}/members/${userId}`, {
+    withCredentials: true,
+  });
+
+  return null;
+}

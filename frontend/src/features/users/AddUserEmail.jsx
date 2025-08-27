@@ -2,7 +2,7 @@ import { Button, HStack, Input } from "@chakra-ui/react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import useUser from "../authentication/useUser";
-const AddUserEmail = ({ addMembers, setAddMembers }) => {
+const AddUserEmail = ({ addMembers, setAddMembers, channelMembers = [] }) => {
   const { user } = useUser();
   const [newUserId, setNewUserId] = useState("");
 
@@ -16,6 +16,14 @@ const AddUserEmail = ({ addMembers, setAddMembers }) => {
 
     if (user.email === newUserId) {
       toast.error("You cannot add yourself as a friend");
+      return;
+    }
+
+    if (
+      channelMembers &&
+      channelMembers.some((chMember) => chMember.email === newUserId)
+    ) {
+      toast.error("User is already in channel");
       return;
     }
 
