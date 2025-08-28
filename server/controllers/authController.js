@@ -382,3 +382,20 @@ exports.isLoggedIn = async (req, res, next) => {
   }
   next(new AppError('Please log in first', 401));
 };
+
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  //get user from the protected middleware
+  const user = await User.findById(req.user._id).select('+password');
+
+  //only if user password if correct
+  if (!(await user.correctPassword(req.body.currentPassword, user.password)))
+    return next(new AppError('Your Current Password in invalid', 401));
+
+  user.password = req.body.password;
+  user.confirmPassword = req.body.confirmPassword;
+
+  await user.save();
+  const userUpdateInfo = await User.findById(user._id);
+
+  sendToken(userUpdateInfo, 200, res, 'Password change successfully');
+});

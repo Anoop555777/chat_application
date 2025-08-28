@@ -7,132 +7,241 @@ import {
   FormControl,
   FormLabel,
   Heading,
+  Stack,
+  Flex,
+  InputGroup,
+  InputRightElement,
+  FormErrorMessage,
 } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
+import useUser from "./../authentication/useUser";
+
+import { useNavigate } from "react-router-dom";
+import useUpdatePassword from "./useUpdatePassword";
+import SpinnerUI from "./../../ui/SpinnerUI";
+import useUpdateProfile from "./useUpdateProfile";
 
 const UpdateUser = () => {
-  const [avatar, setAvatar] = useState("https://i.pravatar.cc/150?u=default");
+  const navigate = useNavigate();
+  const { user, isLoading, isAuthenticated } = useUser();
+  const { updatePassword, isUpdating } = useUpdatePassword();
+  const [showPassword, setShowPassword] = useState(false);
+  const { updateProfile, isPending } = useUpdateProfile();
 
   // Form hooks
-  const { register: registerProfile, handleSubmit: handleProfileSubmit } =
-    useForm();
+  const {
+    register: registerProfile,
+    handleSubmit: handleProfileSubmit,
+    // formState: { error: profileError },
+  } = useForm();
 
   const {
     register: registerPassword,
     handleSubmit: handlePasswordSubmit,
-    watch,
+    formState: { errors: passwordError },
+    getValues,
+    reset: resetPassword,
   } = useForm();
 
-  const newPassword = watch("newPassword");
+  if (isLoading) return <SpinnerUI fullscreen={true} isLoading={isLoading} />;
 
-  // Avatar upload preview
-  const handleAvatarChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setAvatar(reader.result);
-      reader.readAsDataURL(file);
-    }
-  };
+  if (!isAuthenticated) {
+    navigate("/login");
+  }
 
   // API calls
   const onUpdateProfile = (data) => {
-    console.log("Profile Update:", { ...data, avatar });
-    // await api.updateProfile({ fullname: data.fullname, avatar });
+    const formData = new FormData();
+    if (data.avatar && data.avatar[0]) {
+      formData.append("avatar", data.avatar[0]); // 👈 must match multer field name
+    }
+    formData.append("fullname", data.fullname);
+    updateProfile(formData);
   };
 
   const onChangePassword = (data) => {
-    if (data.newPassword !== data.confirmPassword) {
-      alert("New password and confirm password do not match!");
-      return;
-    }
-    console.log("Password Update:", data);
-    // await api.changePassword({ currentPassword: data.currentPassword, newPassword: data.newPassword });
+    updatePassword(data, {
+      onSuccess: () => {
+        resetPassword();
+      },
+    });
   };
 
   return (
-    <Box
-      maxW="md"
-      mx="auto"
-      mt={10}
-      p={6}
-      shadow="md"
-      borderWidth="1px"
-      borderRadius="lg"
-    >
-      <Heading size="lg" mb={6} textAlign="center">
-        Profile Settings
-      </Heading>
+    <>
+      <Flex align="center" justify="space-between" m={6}>
+        <Button variant="ghost" onClick={() => navigate(-1)}>
+          ← Back
+        </Button>
+        <Heading size="lg" textAlign="center">
+          Profile Settings
+        </Heading>
+        <Box w="16" /> {/* spacer so heading stays centered */}
+      </Flex>
+      <Stack
+        direction={{ base: "column", md: "row" }}
+        spacing={6}
+        align="flex-start"
+        justify="center"
+      >
+        <Box
+          flex="1"
+          maxW="md"
+          mx="auto"
+          p={6}
+          shadow="md"
+          borderWidth="1px"
+          borderRadius="lg"
+          width="100%"
+        >
+          {/* ---------- PROFILE FORM ---------- */}
+          <form onSubmit={handleProfileSubmit(onUpdateProfile)}>
+            <VStack spacing={5}>
+              <FormControl>
+                <FormLabel>Avatar</FormLabel>
+                <Avatar size="xl" src={user?.avatar?.url} mb={2} />
+                <Input
+                  type="file"
+                  id="avatar"
+                  name="avatar"
+                  accept="image/*"
+                  {...registerProfile("avatar")}
+                />
+              </FormControl>
 
-      <VStack spacing={8} align="stretch">
-        {/* ---------- PROFILE FORM ---------- */}
-        <form onSubmit={handleProfileSubmit(onUpdateProfile)}>
-          <VStack spacing={5}>
-            <FormControl>
-              <FormLabel>Avatar</FormLabel>
-              <Avatar size="xl" src={avatar} mb={2} />
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarChange}
-              />
-            </FormControl>
+              <FormControl>
+                <FormLabel>Full Name</FormLabel>
+                <Input
+                  defaultValue={user.fullname}
+                  placeholder="Enter full name"
+                  {...registerProfile("fullname")}
+                />
+              </FormControl>
 
-            <FormControl>
-              <FormLabel>Full Name</FormLabel>
-              <Input
-                placeholder="Enter full name"
-                {...registerProfile("fullname")}
-              />
-            </FormControl>
+              <Button
+                type="submit"
+                colorScheme="teal"
+                width="full"
+                isLoading={isPending}
+              >
+                Save Profile
+              </Button>
+            </VStack>
+          </form>
+        </Box>
+        <Box
+          flex="1"
+          maxW="md"
+          mx="auto"
+          p={6}
+          shadow="md"
+          borderWidth="1px"
+          borderRadius="lg"
+          width="100%"
+        >
+          {/* ---------- PASSWORD FORM ---------- */}
+          <form onSubmit={handlePasswordSubmit(onChangePassword)}>
+            <VStack spacing={5}>
+              <FormControl isInvalid={passwordError.currentPassword}>
+                <FormLabel>Current Password</FormLabel>
+                <InputGroup>
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    id="currentPassword"
+                    {...registerPassword("currentPassword", {
+                      required: "Password is Required",
+                    })}
+                  />
+                  <InputRightElement width="4.5rem">
+                    <Button
+                      h="1.75rem"
+                      size="sm"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </Button>
+                  </InputRightElement>
+                </InputGroup>
+                <FormErrorMessage>
+                  {passwordError.currentPassword &&
+                    passwordError.currentPassword.message}
+                </FormErrorMessage>
+              </FormControl>
 
-            <Button type="submit" colorScheme="teal" width="full">
-              Save Profile
-            </Button>
-          </VStack>
-        </form>
+              <FormControl isInvalid={passwordError.password}>
+                <FormLabel>New Password</FormLabel>
+                <InputGroup>
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    id="password"
+                    {...registerPassword("password", {
+                      required: "New Password Is Required",
+                      minLength: {
+                        value: 8,
+                        message: "password must have atleast 8 character",
+                      },
+                      pattern: {
+                        value: /^(?=.*[0-9])(?=.*[!@#$%^&*])(?=.*[A-Z]).+$/i,
+                        message:
+                          "Password must contain atleast 1UpperLetter 1SpecialCharacter 1Number",
+                      },
+                      validate: (value) =>
+                        getValues().confirmPassword !== value ||
+                        "password must be diffrent then your current password",
+                    })}
+                  />
+                  <InputRightElement width="4.5rem">
+                    <Button
+                      h="1.75rem"
+                      size="sm"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </Button>
+                  </InputRightElement>
+                </InputGroup>
+                <FormErrorMessage>
+                  {passwordError.password && passwordError.password.message}
+                </FormErrorMessage>
+              </FormControl>
 
-        {/* ---------- PASSWORD FORM ---------- */}
-        <form onSubmit={handlePasswordSubmit(onChangePassword)}>
-          <VStack spacing={5}>
-            <FormControl>
-              <FormLabel>Current Password</FormLabel>
-              <Input
-                type="password"
-                placeholder="Enter current password"
-                {...registerPassword("currentPassword", { required: true })}
-              />
-            </FormControl>
-
-            <FormControl>
-              <FormLabel>New Password</FormLabel>
-              <Input
-                type="password"
-                placeholder="Enter new password"
-                {...registerPassword("newPassword", {
-                  required: true,
-                  minLength: 6,
-                })}
-              />
-            </FormControl>
-
-            <FormControl>
-              <FormLabel>Confirm New Password</FormLabel>
-              <Input
-                type="password"
-                placeholder="Confirm new password"
-                {...registerPassword("confirmPassword", { required: true })}
-              />
-            </FormControl>
-
-            <Button type="submit" colorScheme="pink" width="full">
-              Change Password
-            </Button>
-          </VStack>
-        </form>
-      </VStack>
-    </Box>
+              <FormControl isInvalid={passwordError.confirmPassword}>
+                <FormLabel>Confirm Password</FormLabel>
+                <InputGroup>
+                  <Input
+                    id="confirmPassword"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    {...registerPassword("confirmPassword", {
+                      required: "Please confirm your password",
+                      validate: (value) =>
+                        getValues().password == value ||
+                        "password must be matched",
+                    })}
+                  />
+                </InputGroup>
+                <FormErrorMessage>
+                  {passwordError.confirmPassword &&
+                    passwordError.confirmPassword.message}
+                </FormErrorMessage>
+              </FormControl>
+              <Button
+                type="submit"
+                isLoading={isUpdating}
+                isDisabled={isUpdating}
+                colorScheme="teal"
+                width="full"
+              >
+                Change Password
+              </Button>
+            </VStack>
+          </form>
+        </Box>
+      </Stack>
+    </>
   );
 };
 

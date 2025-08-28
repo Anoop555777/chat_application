@@ -8,6 +8,11 @@ router.post('/login', authController.logIn);
 router.get('/verification/:verify_token', authController.verification);
 router.post('/resendVerification', authController.resentverification);
 router.get('/signout', authController.signout);
+router.patch(
+  '/updatePassword',
+  authController.protect,
+  authController.updatePassword
+);
 
 // router.post("/send-otp", authController.sendOtp);
 // router.post("/verify-otp", authController.verifyOtp);

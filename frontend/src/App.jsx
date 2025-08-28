@@ -37,7 +37,6 @@ const App = () => {
             <Route index element={<Navigate replace to="/chat" />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/channel/:channelId" element={<ChannelPage />} />
-            <Route path="/profile" element={<UserSetting />} />
           </Route>
           <Route path="/login" element={<Login />} />
           <Route path="/verification/:verify_token" element={<VerifyUser />} />
@@ -47,7 +46,7 @@ const App = () => {
             path="/resetpassword/:reset_token"
             element={<ResetForgetPassword />}
           />
-
+          <Route path="/profile" element={<UserSetting />} />
           <Route path="*" element={<Navigate replace to="/login" />} />
         </Routes>
       </BrowserRouter>

@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
 const crypto = require('crypto');
+const { type } = require('os');
 const userSchema = new mongoose.Schema(
   {
     fullname: {
@@ -42,8 +43,15 @@ const userSchema = new mongoose.Schema(
       },
     },
     avatar: {
-      type: 'String',
-      default: 'https://i.pravatar.cc/150?u=default',
+      url: {
+        type: 'String',
+        default:
+          'https://res.cloudinary.com/dnwwado7g/image/upload/v1756380909/ajchat/default-user.jpg',
+      },
+      public_id: {
+        type: 'String',
+        default: 'default-user',
+      },
     },
     status: {
       type: 'String',
