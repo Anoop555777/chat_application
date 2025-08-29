@@ -6,6 +6,11 @@ const cloudinary = require('./../cloudinary');
 
 exports.getAllChannelMembers = catchAsync(async (req, res, next) => {
   const memberships = await ChannelMember.find({ user: req.user._id });
+  if (!memberships.length)
+    return res.status(200).json({
+      status: 'success',
+      members: [],
+    });
 
   // channelIds that user is member of
   const channelIds = memberships.map((member) => member.channel);
@@ -14,21 +19,22 @@ exports.getAllChannelMembers = catchAsync(async (req, res, next) => {
 
   const allMembers = await ChannelMember.find({
     channel: { $in: channelIds },
+    user: { $ne: req.user._id },
   }).populate({
     path: 'user',
     select: 'fullname email avatar',
   });
 
-  const unique = {};
-
-  allMembers.forEach((member) => {
-    if (member.user._id.toString() !== req.user._id.toString())
-      unique[member.user._id] = member.user;
-  });
+  const uniqueUsers = Object.values(
+    allMembers.reduce((acc, member) => {
+      acc[member.user._id] = member.user;
+      return acc;
+    }, {})
+  );
 
   res.status(200).json({
     status: 'success',
-    members: Object.values(unique),
+    members: uniqueUsers,
   });
 });
 
@@ -37,28 +43,31 @@ exports.userMe = catchAsync(async (req, res, next) => {
 
   if (!user) return next(new AppError('No user found with that ID', 404));
 
+  let deleteOldAvatarPromise = Promise.resolve();
   // ✅ delete old image from cloudinary if exists and new one is uploaded
-  if (
-    req.file &&
-    user.avatar?.public_id &&
-    user.avatar?.public !== 'default-user'
-  ) {
-    await cloudinary.uploader.destroy(user.avatar.public_id);
-  }
 
   if (req.file) {
+    if (
+      req.file &&
+      user.avatar?.public_id &&
+      user.avatar?.public_id !== 'default-user'
+    ) {
+      deleteOldAvatarPromise = cloudinary.uploader.destroy(
+        user.avatar.public_id
+      );
+    }
     user.avatar = {
       url: req.file.path,
       public_id: req.file.filename,
     };
-
-    if (req.body.fullname) user.fullname = req.body.fullname;
-
-    await user.save({ validateBeforeSave: false });
-
-    return res.status(200).json({
-      status: 'success',
-      user,
-    });
   }
+
+  if (req.body.fullname) user.fullname = req.body.fullname;
+
+  await Promise.all([deleteOldAvatarPromise, user.save()]);
+
+  return res.status(200).json({
+    status: 'success',
+    user,
+  });
 });

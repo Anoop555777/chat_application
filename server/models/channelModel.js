@@ -16,6 +16,17 @@ const channelSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    avatar: {
+      url: {
+        type: 'String',
+        default:
+          'https://res.cloudinary.com/dnwwado7g/image/upload/v1756380909/ajchat/default-user.jpg',
+      },
+      public_id: {
+        type: 'String',
+        default: 'default-user',
+      },
+    },
   },
 
   {

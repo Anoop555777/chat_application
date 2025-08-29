@@ -3,9 +3,10 @@ const Channel = require('../models/channelModel');
 const AppError = require('../utils/appError');
 const User = require('../models/userModel');
 const ChannelMember = require('../models/channelMemberModel');
+const cloudinary = require('./../cloudinary');
 
 exports.createChannel = catchAsync(async (req, res, next) => {
-  channelData = {};
+  const channelData = {};
 
   const { members } = req.body;
   if (!Array.isArray(members) || members.length < 1)
@@ -16,7 +17,7 @@ exports.createChannel = catchAsync(async (req, res, next) => {
   // Ensure creator is in the members list
   if (!members.includes(req.user.email)) members.push(req.user.email);
 
-  const user = await User.find({ email: { $in: members } });
+  const user = await User.find({ email: { $in: members } }).lean();
 
   if (!user || user.length != members.length)
     return next(new AppError('one or more member is missing', 404));
@@ -53,10 +54,14 @@ exports.createChannel = catchAsync(async (req, res, next) => {
 exports.getMyChannels = catchAsync(async (req, res, next) => {
   const membership = await ChannelMember.find({
     user: req.user._id,
-  }).populate('channel');
-  let channels = [];
-  if (membership || membership.length > 0)
-    channels = membership.map((m) => m.channel);
+  })
+    .populate({
+      path: 'channel',
+      select: 'name description avatar isPrivate isDirect ',
+    })
+    .lean();
+
+  let channels = membership.map((m) => m.channel);
   res.status(200).json({
     status: 'success',
     channels,
@@ -77,7 +82,7 @@ exports.addUserToChannel = catchAsync(async (req, res, next) => {
     role: 'admin',
   });
 
-  const channel = await Channel.findById(channelId);
+  const channel = await Channel.exists({ _id: channelId });
   if (!channel) return next(new AppError('Channel not found', 404));
 
   if (!adminUser)
@@ -109,17 +114,8 @@ exports.removeUserFromChannel = catchAsync(async (req, res, next) => {
   if (!channelId) return next(new AppError('Channel ID is required', 400));
   if (!memberId) return next(new AppError('Member ID is required', 400));
 
-  //if channel and member exists
-  const channelExists = await ChannelMember.findOne({
-    channel: channelId,
-    user: memberId,
-  });
-
-  if (!channelExists)
-    return next(new AppError('Channel or member not found', 404));
-
   // Check if the user is an admin of the channel
-  const adminUser = await ChannelMember.findOne({
+  const adminUser = await ChannelMember.exists({
     user: req.user._id,
     channel: channelId,
     role: 'admin',
@@ -133,7 +129,14 @@ exports.removeUserFromChannel = catchAsync(async (req, res, next) => {
       )
     );
 
-  await ChannelMember.findByIdAndDelete(channelExists._id);
+  const removed = await ChannelMember.findOneAndDelete({
+    channel: channelId,
+    user: memberId,
+  });
+
+  if (!removed) {
+    return next(new AppError('User is not in this channel', 404));
+  }
 
   //check if channel have only one member
   const remainingMembers = await ChannelMember.countDocuments({
@@ -141,8 +144,10 @@ exports.removeUserFromChannel = catchAsync(async (req, res, next) => {
   });
 
   if (remainingMembers <= 1) {
-    await ChannelMember.deleteMany({ channel: channelId });
-    await Channel.findByIdAndDelete(channelId); // Delete channel if only one member left
+    await Promise.all([
+      ChannelMember.deleteMany({ channel: channelId }),
+      Channel.findByIdAndDelete(channelId), // Delete channel if only one member left
+    ]);
   }
 
   res.status(204).json({
@@ -238,7 +243,7 @@ exports.exitSelfFromUser = catchAsync(async (req, res, next) => {
   const channel = await Channel.findById(channelId);
   if (!channel) return next(new AppError('Channel not found', 404));
 
-  const member = await ChannelMember.find({
+  const member = await ChannelMember.exists({
     channel: channelId,
     user: req.user._id,
   });
@@ -270,13 +275,32 @@ exports.exitSelfFromUser = catchAsync(async (req, res, next) => {
 
 exports.editChannel = catchAsync(async (req, res, next) => {
   const { channelId } = req.params;
-
-  const channel = await Channel.findByIdAndUpdate(channelId, req.body, {
-    new: true,
-    runValidators: true,
-  });
-
+  const channel = await Channel.findById(channelId);
   if (!channel) return next(new AppError('Channel not found', 404));
+
+  let deleteOldAvatarPromise = Promise.resolve();
+
+  if (
+    req.file &&
+    channel?.avatar?.public_id &&
+    channel?.avatar?.public_id !== 'default-user'
+  ) {
+    deleteOldAvatarPromise = cloudinary.uploader.destroy(
+      channel.avatar.public_id
+    );
+  }
+
+  if (req.file) {
+    channel.avatar = {
+      url: req.file.path,
+      public_id: req.file.filename,
+    };
+  }
+
+  if (req.body.name) channel.name = req.body.name;
+  if (req.body.description) channel.description = req.body.description;
+
+  await Promise.all([deleteOldAvatarPromise, channel.save()]);
 
   res.status(200).json({
     status: 'success',

@@ -24,7 +24,11 @@ import useCreateChannel from "./useCreateChannel";
 import useEditChannel from "./useEditChannel";
 import { CloseIcon } from "@chakra-ui/icons";
 
-const CreateChannel = ({ channelToEdit = {}, onCloseModal }) => {
+const CreateChannel = ({
+  isNotGroup = false,
+  channelToEdit = {},
+  onCloseModal,
+}) => {
   const { _id: editId, ...editValues } = channelToEdit;
   const isEditSession = Boolean(editId);
   const [addMembers, setAddMembers] = useState([]);
@@ -42,8 +46,15 @@ const CreateChannel = ({ channelToEdit = {}, onCloseModal }) => {
 
   function onSubmitHandler(data) {
     if (isEditSession) {
+      const formData = new FormData();
+      if (data.avatar && data.avatar[0]) {
+        formData.append("avatar", data.avatar[0]); // 👈 must match multer field name
+      }
+      formData.append("name", data.name);
+      formData.append("description", data.description);
+
       editChannel(
-        { channelId: editId, data },
+        { channelId: editId, formData },
         {
           onSuccess: () => {
             reset();
@@ -118,6 +129,20 @@ const CreateChannel = ({ channelToEdit = {}, onCloseModal }) => {
       )}
       <Stack spacing={2} mt={2}>
         <form onSubmit={handleSubmit(onSubmitHandler)}>
+          {isEditSession && !isNotGroup && (
+            <FormControl>
+              <FormLabel>Avatar</FormLabel>
+              <Avatar size="xl" src={editValues?.avatar?.url} mb={2} />
+              <Input
+                type="file"
+                id="avatar"
+                name="avatar"
+                accept="image/*"
+                {...register("avatar")}
+              />
+            </FormControl>
+          )}
+
           <FormControl isInvalid={errors.name}>
             <FormLabel>Name</FormLabel>
             <Input

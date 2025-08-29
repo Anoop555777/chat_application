@@ -43,14 +43,15 @@ export async function deleteChannel(channelId) {
   return null;
 }
 
-export async function editChannel({ channelId, data }) {
+export async function editChannel({ channelId, formData }) {
   const response = await axios.patch(
     `/api/v1/channels/${channelId}`,
-    {
-      ...data,
-    },
+    formData,
     {
       withCredentials: true,
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
     }
   );
 

@@ -4,6 +4,8 @@ const messageSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Message content is required'],
     trim: true,
+    minlength: [1, 'Message cannot be empty'],
+    maxlength: [2000, 'Message cannot exceed 2000 characters'],
   },
   sender: {
     type: mongoose.Schema.ObjectId,

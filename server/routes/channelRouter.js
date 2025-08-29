@@ -2,6 +2,7 @@ const express = require('express');
 const channelController = require('../controllers/channelController');
 const authController = require('../controllers/authController');
 const channelRouter = express.Router();
+const upload = require('../utils/multerCloudinary');
 
 const messageRouter = require('./messageRouter');
 
@@ -15,7 +16,7 @@ channelRouter
   .route('/:channelId')
   .delete(channelController.deleteChannel)
   .get(channelController.getChannel)
-  .patch(channelController.editChannel);
+  .patch(upload.single('avatar'), channelController.editChannel);
 
 channelRouter.get('/me/my-channels', channelController.getMyChannels);
 

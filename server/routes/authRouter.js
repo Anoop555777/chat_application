@@ -4,7 +4,7 @@ const router = express.Router();
 
 router.get('/isLoggedIn', authController.isLoggedIn);
 router.post('/signup', authController.signUp);
-router.post('/login', authController.logIn);
+router.post('/login', authController.login);
 router.get('/verification/:verify_token', authController.verification);
 router.post('/resendVerification', authController.resentverification);
 router.get('/signout', authController.signout);

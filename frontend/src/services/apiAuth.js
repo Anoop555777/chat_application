@@ -1,10 +1,10 @@
 import axios from "axios";
 
 export async function isLoggedIn() {
-  const data = await axios.get("/api/v1/auth/isLoggedIn", {
+  const { data } = await axios.get("/api/v1/auth/isLoggedIn", {
     withCredentials: true,
   });
-  return data?.data?.user;
+  return data?.user;
 }
 
 export async function signup(data) {

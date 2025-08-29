@@ -54,7 +54,7 @@ exports.resentverification = catchAsync(async (req, res, next) => {
   sendVerifyToken(user, res, next);
 });
 
-exports.logIn = catchAsync(async (req, res, next) => {
+exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
   //check if user have enter email and password
@@ -64,7 +64,7 @@ exports.logIn = catchAsync(async (req, res, next) => {
 
   //check if the user exist and password is correct
 
-  const user = await User.findOne({ email }).select('+password +role');
+  const user = await User.findOne({ email }).select('+password');
 
   if (!user || !(await user.correctPassword(password, user.password)))
     return next(new AppError('please correct your email and password', 401));
@@ -142,27 +142,6 @@ exports.verification = catchAsync(async (req, res, next) => {
   await user.save({ validateBeforeSave: false });
 
   sendToken(user, 200, res, 'you are verified');
-});
-
-exports.login = catchAsync(async (req, res, next) => {
-  const { email, password } = req.body;
-
-  if (!email || !password)
-    return next(new AppError('please enter email and password', 400));
-
-  const user = User.findOne({ email }).select('+password');
-
-  if (!user || !(await user.correctPassword(password, user.password)))
-    return next(
-      new AppError('either user not exist or password is incorrect', 404)
-    );
-
-  if (!user.isVerified)
-    return next(
-      new AppError('you are not verified please check you email', 400)
-    );
-
-  sendToken(user, 200, res);
 });
 
 // exports.sendOtp = catchAsync(async (req, res, next) => {
@@ -388,8 +367,16 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user._id).select('+password');
 
   //only if user password if correct
-  if (!(await user.correctPassword(req.body.currentPassword, user.password)))
-    return next(new AppError('Your Current Password in invalid', 401));
+  if (
+    !user ||
+    !(await user.correctPassword(req.body.currentPassword, user.password))
+  )
+    return next(
+      new AppError(
+        'Your Current Password is invalid or your token expired',
+        401
+      )
+    );
 
   user.password = req.body.password;
   user.confirmPassword = req.body.confirmPassword;

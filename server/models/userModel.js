@@ -2,23 +2,23 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
 const crypto = require('crypto');
-const { type } = require('os');
+
 const userSchema = new mongoose.Schema(
   {
     fullname: {
-      type: 'String',
+      type: String,
       required: [true, 'name is required'],
       trim: true,
       minlength: [3, 'first name must be at least 3 characters long'],
     },
     email: {
-      type: 'String',
+      type: String,
       required: [true, 'email is required'],
       unique: true,
       validate: [validator.isEmail, 'Please provide correct email'],
     },
     password: {
-      type: 'String',
+      type: String,
       required: [true, 'password is required'],
       minlength: [8, 'password must be at least 8 characters long'],
       select: false,
@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
     confirmPassword: {
-      type: 'String',
+      type: String,
       required: [true, 'please confirm your password'],
       validate: {
         validator: function (val) {
@@ -44,17 +44,17 @@ const userSchema = new mongoose.Schema(
     },
     avatar: {
       url: {
-        type: 'String',
+        type: String,
         default:
           'https://res.cloudinary.com/dnwwado7g/image/upload/v1756380909/ajchat/default-user.jpg',
       },
       public_id: {
-        type: 'String',
+        type: String,
         default: 'default-user',
       },
     },
     status: {
-      type: 'String',
+      type: String,
       enum: {
         values: ['online', 'offline', 'away'],
         message: ' offine,online,away are valid status',
@@ -143,7 +143,7 @@ const User = mongoose.model('User', userSchema);
 module.exports = User;
 
 // lastname: {
-//   type: 'String',
+//   type: String,
 //   required: [true, 'lastname is required'],
 //   trim: true,
 //   minlength: [3, 'last name must be at least 3 characters long'],

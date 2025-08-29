@@ -26,16 +26,32 @@ import useDeleteChannel from "./useDeleteChannel";
 import CreateChannel from "./CreateChannel";
 import AddUserToChannel from "../users/AddUserToChannel";
 import ChannelUsers from "../users/ChannelUsers";
+import useUserToChannel from "../users/useUserToChannel";
+import useUser from "../authentication/useUser";
 
 const ChannelDetails = () => {
   const { channel, isLoading } = useChannel();
+  const { channelMembers, isLoading: isFeching } = useUserToChannel();
+  const { user } = useUser();
   const { exitChannel, isPending } = useExitChannel();
   const { deleteChannel, isDeleting } = useDeleteChannel();
-
   const { message } = useMessage();
 
-  if (isLoading) return <SpinnerUI isLoading={isLoading} />;
+  if (isLoading || isFeching) return <SpinnerUI isLoading={isLoading} />;
   if (!channel) return <Empty resource="channel" />;
+
+  const twoUsers = channelMembers.length === 2;
+
+  let avatar;
+  if (twoUsers) {
+    channelMembers.forEach((member) => {
+      if (member._id !== user._id) {
+        avatar = member?.avatar?.url;
+      }
+    });
+  } else {
+    avatar = channel?.avatar?.url;
+  }
 
   const handleSendMessage = (text) => {
     message({ channelId: channel._id, text });
@@ -54,12 +70,7 @@ const ChannelDetails = () => {
       >
         <Flex alignItems={"center"} justifyContent="space-between">
           <HStack gap="4">
-            <Avatar
-              size="md"
-              src={
-                "https://images.unsplash.com/photo-1619946794135-5bc917a27793?ixlib=rb-0.3.5&q=80&fm=jpg&crop=faces&fit=crop&h=200&w=200&s=b616b2c5b373a80ffc9636ba24f7a4a9"
-              }
-            />
+            <Avatar size="md" src={avatar} />
             <VStack alignItems="flex-start" spacing="1px">
               <Text fontSize="lg">{channel.name}</Text>
               <Text fontSize="sm">{channel.description}</Text>
@@ -104,7 +115,10 @@ const ChannelDetails = () => {
                   <Modal.Window>
                     <Modal.Header>Edit Channel</Modal.Header>
                     <Modal.Body>
-                      <CreateChannel channelToEdit={channel} />
+                      <CreateChannel
+                        channelToEdit={channel}
+                        isNotGroup={twoUsers}
+                      />
                     </Modal.Body>
                   </Modal.Window>
                 </Modal>
